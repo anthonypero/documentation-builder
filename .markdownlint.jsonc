@@ -1,0 +1,5 @@
+{
+  "default": true,
+  "MD033": false, // Disable rule for inline HTML, as we are intentionally using <a name="..."> for anchors.
+  "MD013": false  // Disable rule for line length, as per user's instruction.
+}

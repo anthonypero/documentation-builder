@@ -1,0 +1,13 @@
+{
+  "context": {
+    "includeDirectories": [
+      "/Users/apero/.ssh"
+    ],
+    "loadFromIncludeDirectories": false
+  },
+  "ui": {
+    "footer": {
+      "hideContextPercentage": false
+    }
+  }
+}

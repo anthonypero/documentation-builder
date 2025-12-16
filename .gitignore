@@ -38,13 +38,3 @@ yarn-error.log*
 *.flac
 *.ogg
 *.m4a
-
-# LLM Agent specific folders
-.agents/
-.claude/
-.gemini/
-
-# LLM Agent specific root files
-AGENTS.md
-CLAUDE.md
-GEMINI.md

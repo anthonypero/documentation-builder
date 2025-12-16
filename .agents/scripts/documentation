@@ -1,0 +1,129 @@
+#!/bin/bash
+# Orchestrator script for the documentation builder.
+# Manages the command-line interface and the execution of Python helper scripts.
+
+set -e
+
+# --- Configuration ---
+# Get the directory where the script is located, resolving symlinks
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the symlink's path
+done
+SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+PROJECT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
+BUILD_DIR="$PROJECT_DIR/build"
+DOCS_DIR="$PROJECT_DIR/documents"
+
+# --- Functions ---
+
+# Function to show usage
+usage() {
+    echo "Usage: $0 new --url <URL> --selector <NAV_SELECTOR> [--section <CONTENT_SELECTOR>] [--title <TITLE>] [--rate <MILLISECONDS>]"
+    echo "       $0 cleanup"
+    exit 1
+}
+
+# --- Main Logic ---
+
+# Default values for optional arguments
+SECTION_SELECTOR=""
+TITLE=""
+RATE=10 # Default cooldown period in seconds after a 429 error
+
+# Check for at least one argument
+if [ "$#" -eq 0 ]; then
+    usage
+fi
+
+# Subcommand parsing
+SUBCOMMAND=$1
+shift
+
+case "$SUBCOMMAND" in
+    new)
+        # Parse arguments for the 'new' command
+        while [[ "$#" -gt 0 ]]; do
+            case $1 in
+                --url) URL="$2"; shift ;;
+                --selector) NAV_SELECTOR="$2"; shift ;;
+                --section) SECTION_SELECTOR="$2"; shift ;;
+                --title) TITLE="$2"; shift ;;
+                --rate) RATE="$2"; shift ;; # Add rate argument
+                *) echo "Unknown parameter passed: $1"; usage ;;
+            esac
+            shift
+        done
+
+        # Validate required arguments
+        if [ -z "$URL" ] || [ -z "$NAV_SELECTOR" ]; then
+            echo "Error: --url and --selector are required for the 'new' command."
+            usage
+        fi
+
+        # Default title to domain if not provided
+        if [ -z "$TITLE" ]; then
+            TITLE=$(echo "$URL" | awk -F/ '{print $3}')
+        fi
+
+        echo "Starting documentation build..."
+        echo "URL: $URL"
+        echo "Title: $TITLE"
+        echo "Nav Selector: $NAV_SELECTOR"
+        [ ! -z "$SECTION_SELECTOR" ] && echo "Section Selector: $SECTION_SELECTOR"
+        [ "$RATE" -gt 0 ] && echo "Cooldown Period: ${RATE}s"
+
+        # Create build directories
+        mkdir -p "$BUILD_DIR/html"
+        mkdir -p "$BUILD_DIR/md"
+
+        # --- Pipeline Execution ---
+        LINKS_CSV="$BUILD_DIR/links.csv"
+        
+        if [ -f "$LINKS_CSV" ]; then
+            echo "Step 1: links.csv found, skipping link scraping."
+        else
+            echo "Step 1: Scraping links..."
+            "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/1-scrape_links.py" --url "$URL" --selector "$NAV_SELECTOR"
+        fi
+        
+        echo "Step 2: Downloading pages..."
+        "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/2-download_pages.py" --rate "$RATE" --wait-selector "$SECTION_SELECTOR"
+        
+        echo "Step 3: Converting to Markdown..."
+        if [ ! -z "$SECTION_SELECTOR" ]; then
+            "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/3-convert_to_md.py" --section "$SECTION_SELECTOR"
+        else
+            "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/3-convert_to_md.py"
+        fi
+
+        echo "Step 4: Compiling documentation..."
+        "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/4-compile_docs.py" --title "$TITLE"
+
+        echo "Step 5: Linting final documents..."
+        # Loop through all markdown files in the documents directory and fix them
+        for doc in "$DOCS_DIR"/*.md; do
+            if [ -f "$doc" ]; then
+                echo "Linting $doc..."
+                markdownlint-cli2 --fix "$doc"
+            fi
+        done
+
+        echo "Build complete. Final documents are in '$DOCS_DIR'"
+        ;;
+
+    cleanup)
+        echo "Cleaning up build artifacts..."
+        "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/5-cleanup.py"
+        echo "Cleanup complete."
+        ;;
+
+    *)
+        echo "Error: Unknown subcommand '$SUBCOMMAND'"
+        usage
+        ;;
+esac
+
+exit 0

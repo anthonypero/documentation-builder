@@ -57,7 +57,7 @@ markdownlint-cli2
 4. Make the script executable (optional):
 
    ```bash
-   chmod +x .agents/scripts/documentation
+   chmod +x scripts/documentation
    ```
 
 ## Usage
@@ -65,7 +65,7 @@ markdownlint-cli2
 ### Create New Documentation
 
 ```bash
-.agents/scripts/documentation new \
+scripts/documentation new \
   --url "https://example.com/docs/" \
   --selector "nav.sidebar" \
   --title "Example Docs" \
@@ -88,11 +88,11 @@ Re-scrape and rebuild an existing project:
 
 ```bash
 # By project ID
-.agents/scripts/documentation update --id example-docs
+scripts/documentation update --id example-docs
 
 # Or from inside the project folder
 cd documents/example-docs
-../../.agents/scripts/documentation update
+../../scripts/documentation update
 ```
 
 ### Clean Build Artifacts
@@ -100,7 +100,7 @@ cd documents/example-docs
 Remove downloaded HTML and converted Markdown, but preserve the manifest:
 
 ```bash
-.agents/scripts/documentation cleanup --id example-docs
+scripts/documentation cleanup --id example-docs
 ```
 
 ## Output Structure

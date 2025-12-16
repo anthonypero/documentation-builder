@@ -41,3 +41,13 @@ yarn-error.log*
 
 # Generated documentation (scraped content - do not redistribute)
 documents/
+
+# LLM Agent specific folders
+.agents/
+.claude/
+.gemini/
+
+# LLM Agent specific root files
+AGENTS.md
+CLAUDE.md
+GEMINI.md

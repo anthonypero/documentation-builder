@@ -1,0 +1,420 @@
+{
+  "meta": {
+    "id": "gemini-cli",
+    "title": "Gemini CLI",
+    "url": "https://geminicli.com/docs/",
+    "selector": "#starlight__sidebar",
+    "section": "main",
+    "created": "2025-12-16T11:47:44.096120-05:00",
+    "updated": "2025-12-16T11:50:25.636570-05:00",
+    "version": 2
+  },
+  "links": [
+    {
+      "order": 0,
+      "url": "https://geminicli.com/docs/",
+      "title": "Introduction",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 1,
+      "url": "https://geminicli.com/docs/architecture/",
+      "title": "Architecture overview",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 2,
+      "url": "https://geminicli.com/docs/contributing/",
+      "title": "Contribution guide",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 3,
+      "url": "https://geminicli.com/docs/get-started/",
+      "title": "Gemini CLI quickstart",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 4,
+      "url": "https://geminicli.com/docs/get-started/gemini-3/",
+      "title": "Gemini 3 Pro on Gemini CLI",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 5,
+      "url": "https://geminicli.com/docs/get-started/authentication/",
+      "title": "Authentication",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 6,
+      "url": "https://geminicli.com/docs/get-started/configuration/",
+      "title": "Configuration",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 7,
+      "url": "https://geminicli.com/docs/get-started/installation/",
+      "title": "Installation",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 8,
+      "url": "https://geminicli.com/docs/get-started/examples/",
+      "title": "Examples",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 9,
+      "url": "https://geminicli.com/docs/cli/",
+      "title": "Introduction",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 10,
+      "url": "https://geminicli.com/docs/cli/commands/",
+      "title": "Commands",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 11,
+      "url": "https://geminicli.com/docs/cli/checkpointing/",
+      "title": "Checkpointing",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 12,
+      "url": "https://geminicli.com/docs/cli/custom-commands/",
+      "title": "Custom commands",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 13,
+      "url": "https://geminicli.com/docs/cli/enterprise/",
+      "title": "Enterprise",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 14,
+      "url": "https://geminicli.com/docs/cli/headless/",
+      "title": "Headless mode",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 15,
+      "url": "https://geminicli.com/docs/cli/keyboard-shortcuts/",
+      "title": "Keyboard shortcuts",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 16,
+      "url": "https://geminicli.com/docs/cli/model/",
+      "title": "Model selection",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 17,
+      "url": "https://geminicli.com/docs/cli/sandbox/",
+      "title": "Sandbox",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 18,
+      "url": "https://geminicli.com/docs/cli/session-management/",
+      "title": "Session Management",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 19,
+      "url": "https://geminicli.com/docs/cli/settings/",
+      "title": "Settings",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 20,
+      "url": "https://geminicli.com/docs/cli/telemetry/",
+      "title": "Telemetry",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 21,
+      "url": "https://geminicli.com/docs/cli/themes/",
+      "title": "Themes",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 22,
+      "url": "https://geminicli.com/docs/cli/token-caching/",
+      "title": "Token caching",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 23,
+      "url": "https://geminicli.com/docs/cli/trusted-folders/",
+      "title": "Trusted Folders",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 24,
+      "url": "https://geminicli.com/docs/cli/tutorials/",
+      "title": "Tutorials",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 25,
+      "url": "https://geminicli.com/docs/cli/uninstall/",
+      "title": "Uninstall",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 26,
+      "url": "https://geminicli.com/docs/core/",
+      "title": "Introduction",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 27,
+      "url": "https://geminicli.com/docs/core/tools-api/",
+      "title": "Tools API",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 28,
+      "url": "https://geminicli.com/docs/core/memport/",
+      "title": "Memory Import Processor",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 29,
+      "url": "https://geminicli.com/docs/core/policy-engine/",
+      "title": "Policy Engine",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 30,
+      "url": "https://geminicli.com/docs/tools/",
+      "title": "Introduction",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 31,
+      "url": "https://geminicli.com/docs/tools/file-system/",
+      "title": "File system",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 32,
+      "url": "https://geminicli.com/docs/tools/shell/",
+      "title": "Shell",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 33,
+      "url": "https://geminicli.com/docs/tools/web-fetch/",
+      "title": "Web fetch",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 34,
+      "url": "https://geminicli.com/docs/tools/web-search/",
+      "title": "Web search",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 35,
+      "url": "https://geminicli.com/docs/tools/memory/",
+      "title": "Memory",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 36,
+      "url": "https://geminicli.com/docs/tools/todos/",
+      "title": "Todos",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 37,
+      "url": "https://geminicli.com/docs/tools/mcp-server/",
+      "title": "MCP servers",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 38,
+      "url": "https://geminicli.com/docs/extensions/",
+      "title": "Introduction",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 39,
+      "url": "https://geminicli.com/docs/extensions/getting-started-extensions/",
+      "title": "Get started with extensions",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 40,
+      "url": "https://geminicli.com/docs/extensions/extension-releasing/",
+      "title": "Extension releasing",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 41,
+      "url": "https://geminicli.com/docs/hooks/",
+      "title": "Introduction",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 42,
+      "url": "https://geminicli.com/docs/hooks/writing-hooks/",
+      "title": "Writing hooks",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 43,
+      "url": "https://geminicli.com/docs/hooks/best-practices/",
+      "title": "Best practices",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 44,
+      "url": "https://geminicli.com/docs/ide-integration/",
+      "title": "Introduction",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 45,
+      "url": "https://geminicli.com/docs/ide-integration/ide-companion-spec/",
+      "title": "IDE companion spec",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 46,
+      "url": "https://geminicli.com/docs/npm/",
+      "title": "NPM",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 47,
+      "url": "https://geminicli.com/docs/releases/",
+      "title": "Releases",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 48,
+      "url": "https://geminicli.com/docs/integration-tests/",
+      "title": "Integration tests",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 49,
+      "url": "https://geminicli.com/docs/issue-and-pr-automation/",
+      "title": "Issue and PR automation",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 50,
+      "url": "https://geminicli.com/docs/changelogs/",
+      "title": "Release notes",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 51,
+      "url": "https://geminicli.com/docs/changelogs/latest/",
+      "title": "Latest release",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 52,
+      "url": "https://geminicli.com/docs/changelogs/preview/",
+      "title": "Preview release",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 53,
+      "url": "https://geminicli.com/docs/changelogs/releases/",
+      "title": "Changelog",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 54,
+      "url": "https://geminicli.com/docs/faq/",
+      "title": "FAQ",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 55,
+      "url": "https://geminicli.com/docs/troubleshooting/",
+      "title": "Troubleshooting",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 56,
+      "url": "https://geminicli.com/docs/quota-and-pricing/",
+      "title": "Quota and pricing",
+      "status": "downloaded",
+      "retry_count": 0
+    },
+    {
+      "order": 57,
+      "url": "https://geminicli.com/docs/tos-privacy/",
+      "title": "Terms of service",
+      "status": "downloaded",
+      "retry_count": 0
+    }
+  ]
+}

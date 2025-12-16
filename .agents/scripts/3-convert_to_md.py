@@ -6,10 +6,9 @@ import re
 from bs4 import BeautifulSoup, Comment
 from markdownify import markdownify as md
 
+
 def convert_html_to_md(html_filepath, output_dir, section_selector=None):
-    """
-    Converts an HTML file to Markdown, demoting headings by one level.
-    """
+    """Converts an HTML file to Markdown, demoting headings by one level."""
     with open(html_filepath, 'r', encoding='utf-8') as f:
         html_content = f.read()
 
@@ -49,7 +48,6 @@ def convert_html_to_md(html_filepath, output_dir, section_selector=None):
         img_converter=img_replacement
     ).strip()
     
-    # Get the original filename (e.g., 001-some-title.html)
     base_filename = os.path.basename(html_filepath)
     md_filename = base_filename.replace('.html', '.md')
     md_filepath = os.path.join(output_dir, md_filename)
@@ -60,15 +58,15 @@ def convert_html_to_md(html_filepath, output_dir, section_selector=None):
     
     print(f"Converted {html_filepath} to {md_filepath}")
 
+
 def main():
     parser = argparse.ArgumentParser(description="Convert HTML files to Markdown snippets.")
+    parser.add_argument("--project-dir", required=True, help="Path to the project directory.")
     parser.add_argument("--section", help="Optional CSS selector for the main content section.", default=None)
     args = parser.parse_args()
 
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_dir = os.path.dirname(os.path.dirname(script_dir))
-    html_input_dir = os.path.join(project_dir, 'build', 'html')
-    md_output_dir = os.path.join(project_dir, 'build', 'md')
+    html_input_dir = os.path.join(args.project_dir, 'build', 'html')
+    md_output_dir = os.path.join(args.project_dir, 'build', 'md')
 
     if not os.path.exists(html_input_dir):
         print(f"Error: HTML input directory '{html_input_dir}' not found.", file=sys.stderr)
@@ -78,6 +76,7 @@ def main():
         if filename.endswith(".html"):
             html_filepath = os.path.join(html_input_dir, filename)
             convert_html_to_md(html_filepath, md_output_dir, args.section)
+
 
 if __name__ == "__main__":
     main()

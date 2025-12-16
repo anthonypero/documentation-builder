@@ -7,116 +7,245 @@ set -e
 # --- Configuration ---
 # Get the directory where the script is located, resolving symlinks
 SOURCE="${BASH_SOURCE[0]}"
-while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+while [ -h "$SOURCE" ]; do
   DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
   SOURCE="$(readlink "$SOURCE")"
-  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the symlink's path
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
 done
 SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 PROJECT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
-BUILD_DIR="$PROJECT_DIR/build"
-DOCS_DIR="$PROJECT_DIR/documents"
+DOCS_BASE_DIR="$PROJECT_DIR/documents"
 
-# --- Functions ---
+# --- Helper Functions ---
 
-# Function to show usage
+slugify() {
+    echo "$1" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g' | sed -E 's/^-|-$//g'
+}
+
 usage() {
-    echo "Usage: $0 new --url <URL> --selector <NAV_SELECTOR> [--section <CONTENT_SELECTOR>] [--title <TITLE>] [--rate <MILLISECONDS>]"
-    echo "       $0 cleanup"
+    echo "Usage:"
+    echo "  $0 new --url <URL> --selector <NAV_SELECTOR> --title <TITLE> [--section <CONTENT_SELECTOR>] [--rate <SECONDS>]"
+    echo "  $0 update [--id <ID>]"
+    echo "  $0 cleanup [--id <ID>]"
     exit 1
+}
+
+# Resolve project directory from --id flag or cwd
+resolve_project_dir() {
+    local id="$1"
+    
+    if [ -n "$id" ]; then
+        # --id provided, look in documents/
+        local target_dir="$DOCS_BASE_DIR/$id"
+        if [ ! -d "$target_dir" ] || [ ! -f "$target_dir/manifest.json" ]; then
+            echo "Error: Project '$id' not found at $target_dir" >&2
+            exit 1
+        fi
+        echo "$target_dir"
+    else
+        # No --id, check cwd for manifest.json
+        if [ -f "./manifest.json" ]; then
+            echo "$(pwd)"
+        else
+            echo "Error: No --id provided and no manifest.json found in current directory." >&2
+            echo "Either provide --id <project-id> or run from inside a project directory." >&2
+            exit 1
+        fi
+    fi
 }
 
 # --- Main Logic ---
 
-# Default values for optional arguments
-SECTION_SELECTOR=""
-TITLE=""
-RATE=10 # Default cooldown period in seconds after a 429 error
-
-# Check for at least one argument
 if [ "$#" -eq 0 ]; then
     usage
 fi
 
-# Subcommand parsing
 SUBCOMMAND=$1
 shift
 
 case "$SUBCOMMAND" in
     new)
-        # Parse arguments for the 'new' command
+        # Default values
+        SECTION_SELECTOR=""
+        RATE=10
+
+        # Parse arguments
         while [[ "$#" -gt 0 ]]; do
             case $1 in
                 --url) URL="$2"; shift ;;
                 --selector) NAV_SELECTOR="$2"; shift ;;
                 --section) SECTION_SELECTOR="$2"; shift ;;
                 --title) TITLE="$2"; shift ;;
-                --rate) RATE="$2"; shift ;; # Add rate argument
-                *) echo "Unknown parameter passed: $1"; usage ;;
+                --rate) RATE="$2"; shift ;;
+                *) echo "Unknown parameter: $1"; usage ;;
             esac
             shift
         done
 
         # Validate required arguments
-        if [ -z "$URL" ] || [ -z "$NAV_SELECTOR" ]; then
-            echo "Error: --url and --selector are required for the 'new' command."
+        if [ -z "$URL" ] || [ -z "$NAV_SELECTOR" ] || [ -z "$TITLE" ]; then
+            echo "Error: --url, --selector, and --title are required for 'new' command."
             usage
         fi
 
-        # Default title to domain if not provided
-        if [ -z "$TITLE" ]; then
-            TITLE=$(echo "$URL" | awk -F/ '{print $3}')
+        # Generate ID from title
+        ID=$(slugify "$TITLE")
+        PROJECT_PATH="$DOCS_BASE_DIR/$ID"
+
+        # Check if project already exists
+        if [ -d "$PROJECT_PATH" ]; then
+            echo "Error: Project '$ID' already exists at $PROJECT_PATH"
+            echo "Use 'documentation update --id $ID' to rebuild, or delete the folder first."
+            exit 1
         fi
 
         echo "Starting documentation build..."
-        echo "URL: $URL"
         echo "Title: $TITLE"
+        echo "ID: $ID"
+        echo "URL: $URL"
         echo "Nav Selector: $NAV_SELECTOR"
-        [ ! -z "$SECTION_SELECTOR" ] && echo "Section Selector: $SECTION_SELECTOR"
-        [ "$RATE" -gt 0 ] && echo "Cooldown Period: ${RATE}s"
+        [ -n "$SECTION_SELECTOR" ] && echo "Section Selector: $SECTION_SELECTOR"
+        echo "Project Path: $PROJECT_PATH"
 
-        # Create build directories
-        mkdir -p "$BUILD_DIR/html"
-        mkdir -p "$BUILD_DIR/md"
+        # Create project directories
+        mkdir -p "$PROJECT_PATH/build/html"
+        mkdir -p "$PROJECT_PATH/build/md"
 
         # --- Pipeline Execution ---
-        LINKS_CSV="$BUILD_DIR/links.csv"
-        
-        if [ -f "$LINKS_CSV" ]; then
-            echo "Step 1: links.csv found, skipping link scraping."
-        else
-            echo "Step 1: Scraping links..."
-            "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/1-scrape_links.py" --url "$URL" --selector "$NAV_SELECTOR"
-        fi
-        
+        echo "Step 1: Scraping links..."
+        SECTION_ARG=""
+        [ -n "$SECTION_SELECTOR" ] && SECTION_ARG="--section $SECTION_SELECTOR"
+        "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/1-scrape_links.py" \
+            --project-dir "$PROJECT_PATH" \
+            --url "$URL" \
+            --selector "$NAV_SELECTOR" \
+            --title "$TITLE" \
+            --id "$ID" \
+            $SECTION_ARG
+
         echo "Step 2: Downloading pages..."
-        "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/2-download_pages.py" --rate "$RATE" --wait-selector "$SECTION_SELECTOR"
-        
+        WAIT_ARG=""
+        [ -n "$SECTION_SELECTOR" ] && WAIT_ARG="--wait-selector $SECTION_SELECTOR"
+        "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/2-download_pages.py" \
+            --project-dir "$PROJECT_PATH" \
+            --rate "$RATE" \
+            $WAIT_ARG
+
         echo "Step 3: Converting to Markdown..."
-        if [ ! -z "$SECTION_SELECTOR" ]; then
-            "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/3-convert_to_md.py" --section "$SECTION_SELECTOR"
-        else
-            "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/3-convert_to_md.py"
-        fi
+        SECTION_ARG=""
+        [ -n "$SECTION_SELECTOR" ] && SECTION_ARG="--section $SECTION_SELECTOR"
+        "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/3-convert_to_md.py" \
+            --project-dir "$PROJECT_PATH" \
+            $SECTION_ARG
 
         echo "Step 4: Compiling documentation..."
-        "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/4-compile_docs.py" --title "$TITLE"
+        "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/4-compile_docs.py" \
+            --project-dir "$PROJECT_PATH"
 
-        echo "Step 5: Linting final documents..."
-        # Loop through all markdown files in the documents directory and fix them
-        for doc in "$DOCS_DIR"/*.md; do
-            if [ -f "$doc" ]; then
-                echo "Linting $doc..."
-                markdownlint-cli2 --fix "$doc"
-            fi
+        echo "Step 5: Linting final document..."
+        FINAL_DOC="$PROJECT_PATH/$ID.md"
+        if [ -f "$FINAL_DOC" ]; then
+            markdownlint-cli2 --fix "$FINAL_DOC"
+        fi
+
+        echo "Build complete. Final document: $FINAL_DOC"
+        ;;
+
+    update)
+        # Parse arguments
+        ID=""
+        while [[ "$#" -gt 0 ]]; do
+            case $1 in
+                --id) ID="$2"; shift ;;
+                *) echo "Unknown parameter: $1"; usage ;;
+            esac
+            shift
         done
 
-        echo "Build complete. Final documents are in '$DOCS_DIR'"
+        # Resolve project directory
+        PROJECT_PATH=$(resolve_project_dir "$ID")
+        
+        # Read manifest to get parameters
+        MANIFEST="$PROJECT_PATH/manifest.json"
+        if [ ! -f "$MANIFEST" ]; then
+            echo "Error: manifest.json not found at $PROJECT_PATH"
+            exit 1
+        fi
+
+        # Extract values from manifest using Python (more reliable than jq dependency)
+        URL=$("$PROJECT_DIR/.venv/bin/python" -c "import json; m=json.load(open('$MANIFEST')); print(m['meta']['url'])")
+        NAV_SELECTOR=$("$PROJECT_DIR/.venv/bin/python" -c "import json; m=json.load(open('$MANIFEST')); print(m['meta']['selector'])")
+        SECTION_SELECTOR=$("$PROJECT_DIR/.venv/bin/python" -c "import json; m=json.load(open('$MANIFEST')); print(m['meta'].get('section', ''))")
+        TITLE=$("$PROJECT_DIR/.venv/bin/python" -c "import json; m=json.load(open('$MANIFEST')); print(m['meta']['title'])")
+        DOC_ID=$("$PROJECT_DIR/.venv/bin/python" -c "import json; m=json.load(open('$MANIFEST')); print(m['meta']['id'])")
+        VERSION=$("$PROJECT_DIR/.venv/bin/python" -c "import json; m=json.load(open('$MANIFEST')); print(m['meta'].get('version', 1))")
+
+        echo "Updating documentation: $TITLE (v$VERSION -> v$((VERSION + 1)))"
+        echo "URL: $URL"
+        echo "Nav Selector: $NAV_SELECTOR"
+        [ -n "$SECTION_SELECTOR" ] && echo "Section Selector: $SECTION_SELECTOR"
+
+        # Cleanup build directory first
+        echo "Cleaning build directory..."
+        "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/5-cleanup.py" --project-dir "$PROJECT_PATH"
+
+        # Re-run pipeline
+        echo "Step 1: Re-scraping links..."
+        SECTION_ARG=""
+        [ -n "$SECTION_SELECTOR" ] && SECTION_ARG="--section $SECTION_SELECTOR"
+        "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/1-scrape_links.py" \
+            --project-dir "$PROJECT_PATH" \
+            --url "$URL" \
+            --selector "$NAV_SELECTOR" \
+            --title "$TITLE" \
+            --id "$DOC_ID" \
+            --update \
+            $SECTION_ARG
+
+        echo "Step 2: Downloading pages..."
+        WAIT_ARG=""
+        [ -n "$SECTION_SELECTOR" ] && WAIT_ARG="--wait-selector $SECTION_SELECTOR"
+        "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/2-download_pages.py" \
+            --project-dir "$PROJECT_PATH" \
+            --rate 10 \
+            $WAIT_ARG
+
+        echo "Step 3: Converting to Markdown..."
+        SECTION_ARG=""
+        [ -n "$SECTION_SELECTOR" ] && SECTION_ARG="--section $SECTION_SELECTOR"
+        "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/3-convert_to_md.py" \
+            --project-dir "$PROJECT_PATH" \
+            $SECTION_ARG
+
+        echo "Step 4: Compiling documentation..."
+        "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/4-compile_docs.py" \
+            --project-dir "$PROJECT_PATH"
+
+        echo "Step 5: Linting final document..."
+        FINAL_DOC="$PROJECT_PATH/$DOC_ID.md"
+        if [ -f "$FINAL_DOC" ]; then
+            markdownlint-cli2 --fix "$FINAL_DOC"
+        fi
+
+        echo "Update complete. Final document: $FINAL_DOC"
         ;;
 
     cleanup)
-        echo "Cleaning up build artifacts..."
-        "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/5-cleanup.py"
+        # Parse arguments
+        ID=""
+        while [[ "$#" -gt 0 ]]; do
+            case $1 in
+                --id) ID="$2"; shift ;;
+                *) echo "Unknown parameter: $1"; usage ;;
+            esac
+            shift
+        done
+
+        # Resolve project directory
+        PROJECT_PATH=$(resolve_project_dir "$ID")
+
+        echo "Cleaning up build artifacts for: $PROJECT_PATH"
+        "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/5-cleanup.py" --project-dir "$PROJECT_PATH"
         echo "Cleanup complete."
         ;;
 

@@ -2,13 +2,25 @@
 import argparse
 import sys
 import os
-import csv
+import json
+from datetime import datetime
 from urllib.parse import urljoin, urlparse
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
+
+
+def slugify(text):
+    """Converts a string into a URL-friendly slug."""
+    if not text:
+        return "untitled"
+    import re
+    text = re.sub(r'[^\w\s-]', '', text).strip().lower()
+    text = re.sub(r'[-\s]+', '-', text)
+    return text
+
 
 def scrape_links(url, nav_selector):
     """
@@ -36,7 +48,7 @@ def scrape_links(url, nav_selector):
         driver.get(url)
         
         # Wait for the navigation element to be present
-        driver.implicitly_wait(10) # seconds
+        driver.implicitly_wait(10)
         
         nav_element = driver.find_element(By.CSS_SELECTOR, nav_selector)
         link_elements = nav_element.find_elements(By.TAG_NAME, "a")
@@ -48,17 +60,12 @@ def scrape_links(url, nav_selector):
 
         for index, link_element in enumerate(link_elements):
             href = link_element.get_attribute('href')
-            # Use get_attribute('textContent') which is more reliable for complex elements
             title = link_element.get_attribute('textContent').strip()
 
             if href:
-                # Resolve relative URLs
                 absolute_url = urljoin(url, href)
-
-                # Remove fragments and query params for uniqueness check
                 url_to_check = urljoin(absolute_url, urlparse(absolute_url).path)
 
-                # Only add if it's a new, valid HTTP/HTTPS URL from the same domain
                 if url_to_check not in unique_urls and urlparse(absolute_url).scheme in ['http', 'https']:
                     link_parts = urlparse(absolute_url)
                     if link_parts.netloc == base_url_parts.netloc:
@@ -80,33 +87,65 @@ def scrape_links(url, nav_selector):
             
     return scraped_data
 
+
 def main():
     parser = argparse.ArgumentParser(description="Scrape links from a webpage's navigation element.")
+    parser.add_argument("--project-dir", required=True, help="Path to the project directory.")
     parser.add_argument("--url", required=True, help="The URL to scrape.")
     parser.add_argument("--selector", required=True, help="The CSS selector for the navigation element.")
+    parser.add_argument("--title", required=True, help="Human-readable title for the documentation.")
+    parser.add_argument("--id", required=True, help="Slugified ID for the project.")
+    parser.add_argument("--section", default="", help="CSS selector for the main content section.")
+    parser.add_argument("--update", action="store_true", help="Update existing manifest (increment version).")
     
     args = parser.parse_args()
     
+    manifest_path = os.path.join(args.project_dir, 'manifest.json')
+    
+    # Get existing version if updating
+    version = 1
+    created_timestamp = datetime.now().astimezone().isoformat()
+    
+    if args.update and os.path.exists(manifest_path):
+        try:
+            with open(manifest_path, 'r', encoding='utf-8') as f:
+                existing = json.load(f)
+                version = existing.get('meta', {}).get('version', 0) + 1
+                created_timestamp = existing.get('meta', {}).get('created', created_timestamp)
+        except (IOError, json.JSONDecodeError):
+            pass
+    
+    # Scrape links
     scraped_data = scrape_links(args.url, args.selector)
     
-    # Define CSV file path
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_dir = os.path.dirname(os.path.dirname(script_dir))
-    build_dir = os.path.join(project_dir, 'build')
-    csv_filepath = os.path.join(build_dir, 'links.csv')
+    if not scraped_data:
+        print("Error: No links scraped. Check the URL and selector.", file=sys.stderr)
+        sys.exit(1)
+    
+    # Build manifest
+    manifest = {
+        "meta": {
+            "id": args.id,
+            "title": args.title,
+            "url": args.url,
+            "selector": args.selector,
+            "section": args.section if args.section else None,
+            "created": created_timestamp,
+            "updated": datetime.now().astimezone().isoformat(),
+            "version": version
+        },
+        "links": scraped_data
+    }
+    
+    # Write manifest.json
+    try:
+        with open(manifest_path, 'w', encoding='utf-8') as f:
+            json.dump(manifest, f, indent=2, ensure_ascii=False)
+        print(f"Manifest written to {manifest_path} ({len(scraped_data)} links)")
+    except IOError as e:
+        print(f"Error writing manifest: {e}", file=sys.stderr)
+        sys.exit(1)
 
-    # Write to CSV
-    if scraped_data:
-        try:
-            with open(csv_filepath, 'w', newline='', encoding='utf-8') as csvfile:
-                fieldnames = ['order', 'url', 'title', 'status', 'retry_count']
-                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                
-                writer.writeheader()
-                writer.writerows(scraped_data)
-            # Output to stdout is no longer needed as the file is saved
-        except IOError as e:
-            print(f"Error writing to CSV file: {e}", file=sys.stderr)
 
 if __name__ == "__main__":
     main()

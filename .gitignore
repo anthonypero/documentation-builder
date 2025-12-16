@@ -38,3 +38,6 @@ yarn-error.log*
 *.flac
 *.ogg
 *.m4a
+
+# Generated documentation (scraped content - do not redistribute)
+documents/

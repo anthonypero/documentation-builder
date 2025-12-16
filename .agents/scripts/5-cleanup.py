@@ -2,25 +2,49 @@
 import os
 import shutil
 import sys
+import argparse
+
 
 def main():
     """
-    Removes the build directory to clean up all intermediate files.
+    Cleans the build directory while preserving manifest.json.
+    Deletes html/ and md/ subdirectories inside build/.
     """
-    # Go up two directories from the current script's location to find the project root
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_dir = os.path.dirname(os.path.dirname(script_dir))
-    build_dir = os.path.join(project_dir, 'build')
+    parser = argparse.ArgumentParser(description="Clean build artifacts from a project.")
+    parser.add_argument("--project-dir", required=True, help="Path to the project directory.")
+    args = parser.parse_args()
 
-    if os.path.exists(build_dir):
+    build_dir = os.path.join(args.project_dir, 'build')
+    html_dir = os.path.join(build_dir, 'html')
+    md_dir = os.path.join(build_dir, 'md')
+
+    cleaned = False
+
+    # Remove html directory contents
+    if os.path.exists(html_dir):
         try:
-            shutil.rmtree(build_dir)
-            print(f"Successfully removed build directory: {build_dir}")
+            shutil.rmtree(html_dir)
+            os.makedirs(html_dir, exist_ok=True)
+            print(f"Cleaned: {html_dir}")
+            cleaned = True
         except OSError as e:
-            print(f"Error: {e.strerror} - {e.filename}", file=sys.stderr)
-            sys.exit(1)
+            print(f"Error cleaning {html_dir}: {e.strerror}", file=sys.stderr)
+
+    # Remove md directory contents
+    if os.path.exists(md_dir):
+        try:
+            shutil.rmtree(md_dir)
+            os.makedirs(md_dir, exist_ok=True)
+            print(f"Cleaned: {md_dir}")
+            cleaned = True
+        except OSError as e:
+            print(f"Error cleaning {md_dir}: {e.strerror}", file=sys.stderr)
+
+    if cleaned:
+        print("Cleanup complete. manifest.json preserved.")
     else:
-        print("Build directory not found. Nothing to clean.")
+        print("Nothing to clean.")
+
 
 if __name__ == "__main__":
     main()

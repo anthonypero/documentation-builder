@@ -37,6 +37,7 @@ def scrape_links(url, nav_selector):
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--window-size=1920,1080")
 
     # Suppress webdriver-manager logs
     os.environ['WDM_LOG_LEVEL'] = '0'

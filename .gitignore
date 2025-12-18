@@ -43,6 +43,7 @@ yarn-error.log*
 documents/
 
 # LLM Agent specific folders
+.agent/
 .agents/
 .claude/
 .gemini/

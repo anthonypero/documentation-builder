@@ -4,7 +4,8 @@ A CLI tool that scrapes web documentation from navigation elements, converts pag
 
 ## Features
 
-- **Scrape entire documentation sites** from a navigation element
+- **Scrape entire documentation sites** from a navigation element or sitemap
+- **Sitemap discovery** for sites with obfuscated sidebars
 - **Convert HTML to clean Markdown** with heading hierarchy preserved
 - **Generate Table of Contents** automatically
 - **Per-project organization** with independent build directories
@@ -64,6 +65,8 @@ markdownlint-cli2
 
 ### Create New Documentation
 
+**Using sidebar navigation (default):**
+
 ```bash
 scripts/documentation new \
   --url "https://example.com/docs/" \
@@ -72,15 +75,28 @@ scripts/documentation new \
   --section "main.content"
 ```
 
+**Using sitemap (for sites with obfuscated sidebars):**
+
+```bash
+scripts/documentation new \
+  --url "https://example.com/docs/" \
+  --title "Example Docs" \
+  --sitemap \
+  --section "article"
+```
+
 **Arguments:**
 
-| Argument     | Required | Description                                      |
-| ------------ | -------- | ------------------------------------------------ |
-| `--url`      | Yes      | Entry URL containing the navigation              |
-| `--selector` | Yes      | CSS selector for the nav element with doc links  |
-| `--title`    | Yes      | Human-readable title (generates project ID)      |
-| `--section`  | No       | CSS selector for main content area               |
-| `--rate`     | No       | Cooldown period in seconds (default: 10)         |
+| Argument     | Required | Description                                       |
+| ------------ | -------- | ------------------------------------------------- |
+| `--url`      | Yes      | Entry URL containing the navigation               |
+| `--selector` | *        | CSS selector for the nav element with doc links   |
+| `--title`    | Yes      | Human-readable title (generates project ID)       |
+| `--section`  | No       | CSS selector for main content area                |
+| `--sitemap`  | *        | Use sitemap for URL discovery instead of sidebar  |
+| `--rate`     | No       | Cooldown period in seconds (default: 10)          |
+
+> **Note:** Either `--selector` or `--sitemap` is required. Use `--sitemap` when the sidebar is dynamically loaded or collapsed.
 
 ### Update Existing Documentation
 
@@ -125,6 +141,16 @@ Use your browser's Developer Tools to find CSS selectors:
 3. Copy its selector (e.g., `nav.VPSidebar`, `#sidebar`, `.docs-nav`)
 
 For the `--section` argument, find the main content container to avoid scraping headers/footers.
+
+### When to Use `--sitemap`
+
+Use the `--sitemap` flag when:
+
+- The sidebar is dynamically loaded or heavily collapsed
+- Clicking to expand doesn't reveal all links in the DOM
+- The site has a well-structured sitemap at `/sitemap.xml` or `/docs/sitemap.xml`
+
+> **Note:** Sitemap mode returns URLs in alphabetical order, not reading order.
 
 ## License
 

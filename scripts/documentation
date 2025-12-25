@@ -25,8 +25,12 @@ slugify() {
 usage() {
     echo "Usage:"
     echo "  $0 new --url <URL> --selector <NAV_SELECTOR> --title <TITLE> [--section <CONTENT_SELECTOR>] [--rate <SECONDS>]"
+    echo "  $0 new --url <URL> --title <TITLE> --sitemap [--section <CONTENT_SELECTOR>] [--rate <SECONDS>]"
     echo "  $0 update [--id <ID>]"
     echo "  $0 cleanup [--id <ID>]"
+    echo ""
+    echo "Options:"
+    echo "  --sitemap    Use sitemap for URL discovery instead of sidebar (for obfuscated sidebars)"
     exit 1
 }
 
@@ -68,6 +72,7 @@ case "$SUBCOMMAND" in
         # Default values
         SECTION_SELECTOR=""
         RATE=10
+        USE_SITEMAP=false
 
         # Parse arguments
         while [[ "$#" -gt 0 ]]; do
@@ -77,14 +82,21 @@ case "$SUBCOMMAND" in
                 --section) SECTION_SELECTOR="$2"; shift ;;
                 --title) TITLE="$2"; shift ;;
                 --rate) RATE="$2"; shift ;;
+                --sitemap) USE_SITEMAP=true ;;
                 *) echo "Unknown parameter: $1"; usage ;;
             esac
             shift
         done
 
         # Validate required arguments
-        if [ -z "$URL" ] || [ -z "$NAV_SELECTOR" ] || [ -z "$TITLE" ]; then
-            echo "Error: --url, --selector, and --title are required for 'new' command."
+        if [ -z "$URL" ] || [ -z "$TITLE" ]; then
+            echo "Error: --url and --title are required for 'new' command."
+            usage
+        fi
+
+        # Validate: either --selector or --sitemap must be provided
+        if [ -z "$NAV_SELECTOR" ] && [ "$USE_SITEMAP" = false ]; then
+            echo "Error: Either --selector or --sitemap is required."
             usage
         fi
 
@@ -103,7 +115,8 @@ case "$SUBCOMMAND" in
         echo "Title: $TITLE"
         echo "ID: $ID"
         echo "URL: $URL"
-        echo "Nav Selector: $NAV_SELECTOR"
+        [ -n "$NAV_SELECTOR" ] && echo "Nav Selector: $NAV_SELECTOR"
+        [ "$USE_SITEMAP" = true ] && echo "Mode: Sitemap"
         [ -n "$SECTION_SELECTOR" ] && echo "Section Selector: $SECTION_SELECTOR"
         echo "Project Path: $PROJECT_PATH"
 
@@ -113,30 +126,35 @@ case "$SUBCOMMAND" in
 
         # --- Pipeline Execution ---
         echo "Step 1: Scraping links..."
-        SECTION_ARG=""
-        [ -n "$SECTION_SELECTOR" ] && SECTION_ARG="--section $SECTION_SELECTOR"
+        SELECTOR_ARG=()
+        if [ -n "$NAV_SELECTOR" ]; then SELECTOR_ARG=("--selector" "$NAV_SELECTOR"); fi
+        SECTION_ARG=()
+        if [ -n "$SECTION_SELECTOR" ]; then SECTION_ARG=("--section" "$SECTION_SELECTOR"); fi
+        SITEMAP_ARG=()
+        if [ "$USE_SITEMAP" = true ]; then SITEMAP_ARG=("--sitemap"); fi
         "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/1-scrape_links.py" \
             --project-dir "$PROJECT_PATH" \
             --url "$URL" \
-            --selector "$NAV_SELECTOR" \
             --title "$TITLE" \
             --id "$ID" \
-            $SECTION_ARG
+            "${SELECTOR_ARG[@]}" \
+            "${SECTION_ARG[@]}" \
+            "${SITEMAP_ARG[@]}"
 
         echo "Step 2: Downloading pages..."
-        WAIT_ARG=""
-        [ -n "$SECTION_SELECTOR" ] && WAIT_ARG="--wait-selector $SECTION_SELECTOR"
+        WAIT_ARG=()
+        if [ -n "$SECTION_SELECTOR" ]; then WAIT_ARG=("--wait-selector" "$SECTION_SELECTOR"); fi
         "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/2-download_pages.py" \
             --project-dir "$PROJECT_PATH" \
             --rate "$RATE" \
-            $WAIT_ARG
+            "${WAIT_ARG[@]}"
 
         echo "Step 3: Converting to Markdown..."
-        SECTION_ARG=""
-        [ -n "$SECTION_SELECTOR" ] && SECTION_ARG="--section $SECTION_SELECTOR"
+        SECTION_ARG=()
+        if [ -n "$SECTION_SELECTOR" ]; then SECTION_ARG=("--section" "$SECTION_SELECTOR"); fi
         "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/3-convert_to_md.py" \
             --project-dir "$PROJECT_PATH" \
-            $SECTION_ARG
+            "${SECTION_ARG[@]}"
 
         echo "Step 4: Compiling documentation..."
         "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/4-compile_docs.py" \
@@ -191,8 +209,8 @@ case "$SUBCOMMAND" in
 
         # Re-run pipeline
         echo "Step 1: Re-scraping links..."
-        SECTION_ARG=""
-        [ -n "$SECTION_SELECTOR" ] && SECTION_ARG="--section $SECTION_SELECTOR"
+        SECTION_ARG=()
+        if [ -n "$SECTION_SELECTOR" ]; then SECTION_ARG=("--section" "$SECTION_SELECTOR"); fi
         "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/1-scrape_links.py" \
             --project-dir "$PROJECT_PATH" \
             --url "$URL" \
@@ -200,22 +218,22 @@ case "$SUBCOMMAND" in
             --title "$TITLE" \
             --id "$DOC_ID" \
             --update \
-            $SECTION_ARG
+            "${SECTION_ARG[@]}"
 
         echo "Step 2: Downloading pages..."
-        WAIT_ARG=""
-        [ -n "$SECTION_SELECTOR" ] && WAIT_ARG="--wait-selector $SECTION_SELECTOR"
+        WAIT_ARG=()
+        if [ -n "$SECTION_SELECTOR" ]; then WAIT_ARG=("--wait-selector" "$SECTION_SELECTOR"); fi
         "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/2-download_pages.py" \
             --project-dir "$PROJECT_PATH" \
             --rate 10 \
-            $WAIT_ARG
+            "${WAIT_ARG[@]}"
 
         echo "Step 3: Converting to Markdown..."
-        SECTION_ARG=""
-        [ -n "$SECTION_SELECTOR" ] && SECTION_ARG="--section $SECTION_SELECTOR"
+        SECTION_ARG=()
+        if [ -n "$SECTION_SELECTOR" ]; then SECTION_ARG=("--section" "$SECTION_SELECTOR"); fi
         "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/3-convert_to_md.py" \
             --project-dir "$PROJECT_PATH" \
-            $SECTION_ARG
+            "${SECTION_ARG[@]}"
 
         echo "Step 4: Compiling documentation..."
         "$PROJECT_DIR/.venv/bin/python" "$SCRIPT_DIR/4-compile_docs.py" \

@@ -47,6 +47,7 @@ documents/
 .agents/
 .claude/
 .gemini/
+.kilocode/
 
 # LLM Agent specific root files
 AGENTS.md

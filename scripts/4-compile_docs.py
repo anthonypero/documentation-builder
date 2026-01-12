@@ -84,8 +84,15 @@ def compile_docs(project_dir):
 
     final_content = "\n".join(final_lines)
     
+    manifest_meta = manifest.get('meta', {})
+    created_date = manifest_meta.get('created', '')
+    updated_date = manifest_meta.get('updated', '')
+    
+    # YAML Frontmatter
+    yaml_header = f"---\nid: {doc_id}\ncreated: {created_date}\nupdated: {updated_date}\n---\n\n"
+
     toc_section = "## Table of Contents\n\n" + "\n".join(toc_lines) + "\n\n"
-    document_to_write = f"# {title}\n\n{toc_section}{final_content}"
+    document_to_write = f"{yaml_header}# {title}\n\n{toc_section}{final_content}"
     
     # Write to project directory with id as filename
     output_filepath = os.path.join(project_dir, f"{doc_id}.md")
